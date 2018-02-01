@@ -392,3 +392,23 @@ fn fuzz_101() {
         buf.clear();
     }
 }
+
+#[test]
+fn test_issue106() {
+    let data = br#"<?xml version="1.0" encoding="ascii"?>
+<name>amp&#232;re</name>"#;
+    let mut reader = Reader::from_reader(&data[..]);
+    reader.trim_text(true);
+    let mut buf = vec![];
+    loop {
+        match reader.read_event(&mut buf).expect("No errors expected") {
+            Text(bytes_text) => {
+                let string = bytes_text.unescape_and_decode(&reader).unwrap();
+                assert_eq!(string, "ampère");
+            },
+            Eof => break,
+            _ => (),
+        }
+        buf.clear();
+    }
+}
